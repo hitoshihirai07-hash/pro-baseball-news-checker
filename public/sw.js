@@ -1,4 +1,4 @@
-const CACHE='baseball-notes-shell-v1';
+const CACHE='baseball-notes-shell-v2';
 const SHELL=['/','/index.html','/styles.css','/app.js','/api.js','/core.js','/db.js','/pwa.js','/favicon.svg','/manifest.webmanifest','/icons/icon-192.png','/icons/icon-512.png','/icons/icon-maskable.png','/icons/apple-touch-icon.png'];
 self.addEventListener('install',event=>{
   event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(SHELL)).then(()=>self.skipWaiting()));

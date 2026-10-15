@@ -50,7 +50,12 @@ export function japanDay(value = new Date()) { return new Intl.DateTimeFormat('s
 export function chatText(articles) { return '今日確認したい記事\n\n' + articles.map((a,i) => `${i+1}.\n媒体：${a.sourceName}\nタイトル：${a.title}\nURL：${a.url}`).join('\n\n'); }
 const clean = x => String(x).replace(/[\r\n]/g,' ');
 const mdEscape = x => clean(x).replace(/([\\`*_[\]<>])/g,'\\$1');
-export function articleMarkdown(a) { return `- 媒体：${mdEscape(a.sourceName)}\n- タイトル：${mdEscape(a.title)}\n- 公開日時：${a.publishedAt || '不明'}\n- URL：<${a.url.replace(/>/g,'%3E')}>`; }
+export function japanDateTime(value) {
+  if(!value || !Number.isFinite(Date.parse(value)))return '不明';
+  const parts=Object.fromEntries(new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Tokyo',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).formatToParts(new Date(value)).map(p=>[p.type,p.value]));
+  return `${parts.year}-${parts.month}-${parts.day} ${parts.hour}:${parts.minute}（日本時間）`;
+}
+export function articleMarkdown(a) { return `- 媒体：${mdEscape(a.sourceName)}\n- タイトル：${mdEscape(a.title)}\n- 公開日時：${japanDateTime(a.publishedAt)}\n- URL：<${a.url.replace(/>/g,'%3E')}>`; }
 export function markdownForNote(note, articles) {
   return `# ${japanDay(note.createdAt)} ${mdEscape(note.title)}\n\n## 元記事\n\n${articles[0] ? articleMarkdown(articles[0]) : '関連記事なし'}\n\n## 自分のメモ\n\n${note.body}\n\n## 関連記事\n\n${articles.slice(1).map(articleMarkdown).join('\n\n') || 'なし'}\n\n## タグ\n\n${note.tags.map(t=>'#'+t.replace(/[\s#]/g,'')).join('\n')}\n`;
 }
