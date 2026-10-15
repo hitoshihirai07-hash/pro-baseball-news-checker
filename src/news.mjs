@@ -1,4 +1,5 @@
 import { canonicalUrl, classify } from '../public/core.js';
+import {parseHochiList} from './hochi.mjs';
 function decode(value) {
   return value.replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g,'$1').replace(/<[^>]*>/g,'').replace(/&(#x[\da-f]+|#\d+|amp|lt|gt|quot|apos|nbsp);/gi, (m,e) => {
     if(e[0]==='#') { const n=e[1].toLowerCase()==='x'?parseInt(e.slice(2),16):parseInt(e.slice(1),10);return n>0&&n<=0x10ffff?String.fromCodePoint(n):''; }
@@ -39,9 +40,10 @@ export async function collectNews(sources, fetcher = fetch) {
   const results=await Promise.all(sources.map(async source=>{
     const controller=new AbortController(), timer=setTimeout(()=>controller.abort(),12000);
     try {
-      const response=await fetcher(source.url,{signal:controller.signal,headers:{Accept:'application/rss+xml, application/atom+xml, application/xml, text/xml','User-Agent':'PersonalBaseballReader/1.0'},redirect:'follow'});
+      const response=await fetcher(source.url,{signal:controller.signal,headers:{Accept:source.type==='hochi-list'?'text/html':'application/rss+xml, application/atom+xml, application/xml, text/xml','User-Agent':'PersonalBaseballReader/1.0'},redirect:'follow'});
       if(!response.ok)throw new Error(`HTTP ${response.status}`);
-      const articles=parseFeed(await boundedText(response),source);
+      const content=await boundedText(response);
+      const articles=source.type==='hochi-list'?parseHochiList(content,source):parseFeed(content,source);
       return {articles,status:{id:source.id,name:source.label||source.name,ok:true,count:articles.length,at:new Date().toISOString()}};
     } catch(e) {return {articles:[],status:{id:source.id,name:source.label||source.name,ok:false,count:0,error:e.name==='AbortError'?'取得がタイムアウトしました':e.message,at:new Date().toISOString()}};}
     finally{clearTimeout(timer);}

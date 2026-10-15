@@ -1,5 +1,6 @@
 import {openDB,readAll,replaceAll} from './db.js';
 import {readApiJson} from './api.js';
+import {setupPWA} from './pwa.js';
 import {VERSION,canonicalUrl,classify,mergeArticles,validateBackup,japanDay,chatText,markdownForNote,markdownForArticle} from './core.js';
 const $=id=>document.getElementById(id);
 const escape=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -64,7 +65,7 @@ function render(){
 }
 function renderSources(){
   const statuses=state.settings.sourceStatus||[];
-  $('source-status').innerHTML=media.sources.map(s=>{const r=statuses.find(x=>x.id===s.id);return `<div class="source-item"><h3>${escape(s.label||s.name)} <span class="category">自動取得</span></h3><p>${busy?'取得中…':r?(r.ok?`${r.count}件取得`:`取得失敗：${escape(r.error)}`):'未取得'}</p><p>${r?fullDate(r.at):'公式RSSから取得します'}</p><a href="${escape(s.home)}" target="_blank" rel="noopener noreferrer">元サイトを開く ↗</a></div>`;}).join('');
+  $('source-status').innerHTML=media.sources.map(s=>{const r=statuses.find(x=>x.id===s.id);return `<div class="source-item"><h3>${escape(s.label||s.name)} <span class="category">自動取得</span></h3><p>${escape(s.method||'公式RSS')}</p><p>${busy?'取得中…':r?(r.ok?`${r.count}件取得`:`取得失敗：${escape(r.error)}`):'未取得'}</p><p>${r?fullDate(r.at):'ツールを開いたときに取得します'}</p><a href="${escape(s.home)}" target="_blank" rel="noopener noreferrer">元サイトを開く ↗</a></div>`;}).join('');
   $('source-links').innerHTML=media.sourceLinks.map(s=>`<div class="source-item"><h3><a href="${escape(s.url)}" target="_blank" rel="noopener noreferrer">${escape(s.name)} ↗</a></h3><p>${escape(s.reason)}</p></div>`).join('');
 }
 function renderBackup(){
@@ -72,6 +73,7 @@ function renderBackup(){
   $('last-backup').textContent=`最終書き出し：${fullDate(state.settings.lastBackup)}`;
 }
 async function refresh(){
+  if(!navigator.onLine){$('update-status').textContent='オフライン · 保存済みの記事とメモを利用できます';return;}
   if(busy||!ready)return;busy=true;$('refresh-button').disabled=true;$('refresh-label').textContent='取得中…';$('refresh-icon').classList.add('spinning');$('update-status').textContent='新しい記事を取得中…';renderArticles();renderSources();
   try{
     const response=await fetch('/api/news',{signal:AbortSignal.timeout(20000)});
@@ -82,7 +84,7 @@ async function refresh(){
     const failed=data.sources.filter(s=>!s.ok).length;
     $('update-status').textContent=failed===data.sources.length?'取得できませんでした。取得状況を確認してください。':`${fmt(data.fetchedAt)} 更新 · 新着 ${added}件${failed?` · ${failed}媒体で取得失敗`:''}`;
     if(failed)notify('一部の記事を取得できませんでした。「取得状況」を確認できます。',true);
-  }catch(e){$('update-status').textContent='取得に失敗しました。保存済みデータは利用できます。';notify(e.message,true);}
+  }catch(e){$('update-status').textContent=!navigator.onLine?'オフライン · 保存済みの記事とメモを利用できます':'取得に失敗しました。保存済みデータは利用できます。';notify(e.name==='TypeError'?'通信できません。保存済みの記事とメモは利用できます。':e.message,true);}
   finally{busy=false;$('refresh-button').disabled=false;$('refresh-label').textContent='今すぐ更新';$('refresh-icon').classList.remove('spinning');renderArticles();renderSources();}
 }
 function noteArticles(id){return state.articleNotes.filter(l=>l.noteId===id).map(l=>state.articles.find(a=>a.id===l.articleId)).filter(Boolean);}
@@ -177,4 +179,7 @@ async function init(){
     refresh();
   }catch(e){$('fatal').hidden=false;$('fatal').textContent='保存領域を開けませんでした。ブラウザのサイトデータ設定を確認し、再読み込みしてください。 '+e.message;$('refresh-button').disabled=true;notify('保存領域の初期化に失敗しました。',true);}
 }
+window.addEventListener('online',()=>refresh());
+window.addEventListener('offline',()=>{$('update-status').textContent='オフライン · 保存済みの記事とメモを利用できます';});
+setupPWA(notify);
 init();

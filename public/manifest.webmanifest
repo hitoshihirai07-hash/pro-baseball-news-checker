@@ -1,0 +1,17 @@
+{
+  "id": "/",
+  "name": "野球記事ノート",
+  "short_name": "野球ノート",
+  "description": "巨人とプロ野球の記事を読み、自分の考えを残す個人用ノート",
+  "lang": "ja",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#ffffff",
+  "icons": [
+    {"src":"/icons/icon-192.png","sizes":"192x192","type":"image/png","purpose":"any"},
+    {"src":"/icons/icon-512.png","sizes":"512x512","type":"image/png","purpose":"any"},
+    {"src":"/icons/icon-maskable.png","sizes":"512x512","type":"image/png","purpose":"maskable"}
+  ]
+}

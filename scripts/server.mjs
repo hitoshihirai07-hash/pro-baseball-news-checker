@@ -5,7 +5,7 @@ import path from 'node:path';
 import {onRequest} from '../functions/api/[[path]].js';
 const root=path.resolve(fileURLToPath(new URL('../public/',import.meta.url)));
 const port=Number(process.env.PORT||8787);
-const mime={'.html':'text/html; charset=utf-8','.css':'text/css; charset=utf-8','.js':'text/javascript; charset=utf-8','.svg':'image/svg+xml'};
+const mime={'.html':'text/html; charset=utf-8','.css':'text/css; charset=utf-8','.js':'text/javascript; charset=utf-8','.svg':'image/svg+xml','.png':'image/png','.webmanifest':'application/manifest+json','.json':'application/json'};
 http.createServer(async(req,res)=>{
   try{
     const url=new URL(req.url,`http://127.0.0.1:${port}`);
