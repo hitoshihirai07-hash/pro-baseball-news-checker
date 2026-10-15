@@ -1,0 +1,16 @@
+{
+  "name": "pro-baseball-news-checker",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "プロ野球記事と自分のメモをブラウザに保存する個人用ツール",
+  "engines": { "node": ">=22" },
+  "scripts": {
+    "start": "node scripts/server.mjs",
+    "dev": "node scripts/server.mjs",
+    "test": "node scripts/check.mjs",
+    "test:dev": "node --test CleanUP/tests/*.test.mjs",
+    "check": "node scripts/check.mjs",
+    "package": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/package.ps1"
+  }
+}
