@@ -4,7 +4,7 @@ let cached=null, expires=0, pending=null;
 export async function api(request) {
   const url=new URL(request.url);
   if(!url.pathname.startsWith('/api/'))return null;
-  if(request.method!=='GET')return new Response('Method not allowed',{status:405,headers:{Allow:'GET'}});
+  if(request.method!=='GET')return Response.json({error:'GETのみ利用できます。'},{status:405,headers:{Allow:'GET'}});
   if(url.pathname==='/api/sources')return Response.json({sources:sources.map(({id,name,label,home})=>({id,name,label,home})),sourceLinks});
   if(url.pathname!=='/api/news')return Response.json({error:'見つかりません'},{status:404});
   if(!cached||Date.now()>expires){

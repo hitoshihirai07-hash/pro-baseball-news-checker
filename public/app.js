@@ -1,4 +1,5 @@
 import {openDB,readAll,replaceAll} from './db.js';
+import {readApiJson} from './api.js';
 import {VERSION,canonicalUrl,classify,mergeArticles,validateBackup,japanDay,chatText,markdownForNote,markdownForArticle} from './core.js';
 const $=id=>document.getElementById(id);
 const escape=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -73,8 +74,8 @@ function renderBackup(){
 async function refresh(){
   if(busy||!ready)return;busy=true;$('refresh-button').disabled=true;$('refresh-label').textContent='取得中…';$('refresh-icon').classList.add('spinning');$('update-status').textContent='新しい記事を取得中…';renderArticles();renderSources();
   try{
-    const response=await fetch('/api/news',{signal:AbortSignal.timeout(20000)});if(!response.ok)throw new Error(`記事取得APIに接続できません（${response.status}）`);
-    const data=await response.json();if(!Array.isArray(data.articles)||!Array.isArray(data.sources))throw new Error('取得結果の形式が不正です。');
+    const response=await fetch('/api/news',{signal:AbortSignal.timeout(20000)});
+    const data=await readApiJson(response);if(!Array.isArray(data.articles)||!Array.isArray(data.sources))throw new Error('取得結果の形式が不正です。');
     // Validate incoming records using the same boundary as JSON restoration.
     const incoming=validateBackup({version:VERSION,articles:data.articles,notes:[],articleNotes:[]}).articles;
     let added=0;await transaction(next=>{const merged=mergeArticles(next.articles,incoming);next.articles=merged.articles;added=merged.added;next.settings.sourceStatus=data.sources;next.settings.lastFetch=data.fetchedAt;});
@@ -171,7 +172,7 @@ channel?.addEventListener('message',guard(async()=>{state=await readAll();render
 async function init(){
   try{
     await openDB();state=await readAll();ready=true;render();$('update-status').textContent=state.settings.lastFetch?`前回取得：${fmt(state.settings.lastFetch)}`:'まだ記事を取得していません';
-    fetch('/api/sources').then(r=>r.ok?r.json():null).then(result=>{if(result){media=result;renderSources();}}).catch(()=>{});
+    fetch('/api/sources').then(readApiJson).then(result=>{if(result){media=result;renderSources();}}).catch(()=>{});
     if(navigator.storage?.persist)navigator.storage.persist().catch(()=>{});
     refresh();
   }catch(e){$('fatal').hidden=false;$('fatal').textContent='保存領域を開けませんでした。ブラウザのサイトデータ設定を確認し、再読み込みしてください。 '+e.message;$('refresh-button').disabled=true;notify('保存領域の初期化に失敗しました。',true);}

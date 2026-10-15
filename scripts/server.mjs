@@ -2,14 +2,14 @@ import http from 'node:http';
 import {readFile} from 'node:fs/promises';
 import {fileURLToPath} from 'node:url';
 import path from 'node:path';
-import {api} from '../src/worker.mjs';
+import {onRequest} from '../functions/api/[[path]].js';
 const root=path.resolve(fileURLToPath(new URL('../public/',import.meta.url)));
 const port=Number(process.env.PORT||8787);
 const mime={'.html':'text/html; charset=utf-8','.css':'text/css; charset=utf-8','.js':'text/javascript; charset=utf-8','.svg':'image/svg+xml'};
 http.createServer(async(req,res)=>{
   try{
     const url=new URL(req.url,`http://127.0.0.1:${port}`);
-    const response=await api(new Request(url,{method:req.method}));
+    const response=url.pathname.startsWith('/api/')?await onRequest({request:new Request(url,{method:req.method})}):null;
     if(response){res.writeHead(response.status,Object.fromEntries(response.headers));res.end(Buffer.from(await response.arrayBuffer()));return;}
     if(!['GET','HEAD'].includes(req.method)){res.writeHead(405);res.end();return;}
     const pathname=decodeURIComponent(url.pathname), file=path.resolve(root,'.'+(pathname==='/'?'/index.html':pathname));
