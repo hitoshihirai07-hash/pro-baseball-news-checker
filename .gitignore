@@ -1,0 +1,11 @@
+node_modules/
+.wrangler/
+.env
+.env.*
+!.env.example
+*.log
+CleanUP/
+baseball-backup-*.json
+baseball-before-restore-*.json
+.DS_Store
+Thumbs.db
